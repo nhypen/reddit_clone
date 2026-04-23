@@ -37,7 +37,7 @@ https://nhypen.github.io/reddit_clone/
 Projekt jest w wersji **single file**, czyli wszystko znajduje się w jednym pliku:
 
 ```
-Reddit_clone_index.html
+index.html
 ```
 
 ---
