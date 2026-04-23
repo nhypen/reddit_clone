@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reddit Clone</title>
+  <style>
+    :root {
+      --bg: #dae0e6;
+      --surface: #ffffff;
+      --surface-2: #f6f7f8;
+      --text: #1c1c1c;
+      --muted: #6b6f76;
+      --border: #d5d7da;
+      --primary: #ff4500;
+      --primary-dark: #e03d00;
+      --blue: #0079d3;
+      --green: #46d160;
+      --danger: #d93a00;
+      --shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    body.dark {
+      --bg: #0f1113;
+      --surface: #1a1c1f;
+      --surface-2: #25282c;
+      --text: #f2f4f5;
+      --muted: #a8adb4;
+      --border: #34383d;
+      --primary: #ff5c1f;
+      --primary-dark: #ff4500;
+      --blue: #4ea1f3;
+      --green: #59e17a;
+      --danger: #ff6a3d;
+      --shadow: 0 12px 28px rgba(0,0,0,0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .search-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 14px;
+    }
+
+    .search-wrap input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      outline: none;
+    }
+
+    .topbar-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+      font-weight: 700;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .layout {
+      max-width: 1300px;
+      margin: 22px auto;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar, .rightbar {
+      padding: 16px;
+      position: sticky;
+      top: 82px;
+    }
+
+    .sidebar h3, .rightbar h3 {
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+
+    .sidebar ul, .rightbar ul {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .sidebar li button,
+    .chip,
+    .community-item {
+      width: 100%;
+      text-align: left;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .sidebar li button:hover,
+    .community-item:hover {
+      border-color: var(--primary);
+      transform: translateX(2px);
+    }
+
+    .sidebar li button.active {
+      background: rgba(255,69,0,0.12);
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .feed-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 14px;
+    }
+
+    .feed-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .feed-controls select {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 10px;
+      outline: none;
+    }
+
+    .stats {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .feed {
+      display: grid;
+      gap: 16px;
+    }
+
+    .post {
+      display: grid;
+      grid-template-columns: 64px minmax(0,1fr);
+      overflow: hidden;
+    }
+
+    .vote-box {
+      background: var(--surface-2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 8px;
+    }
+
+    .vote-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      font-size: 1.1rem;
+      transition: 0.2s ease;
+    }
+
+    .vote-btn:hover {
+      background: rgba(255,69,0,0.12);
+      color: var(--primary);
+    }
+
+    .score {
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    .post-content {
+      padding: 18px;
+    }
+
+    .post-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(0,121,211,0.12);
+      color: var(--blue);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      width: fit-content;
+      margin-bottom: 10px;
+    }
+
+    .post-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    .post-text {
+      color: var(--text);
+      line-height: 1.65;
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+    }
+
+    .post-image {
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .post-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .action-btn {
+      border: none;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .action-btn.active-save {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(70,209,96,0.1);
+    }
+
+    .comments {
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      padding-top: 14px;
+      display: none;
+    }
+
+    .comments.open {
+      display: block;
+    }
+
+    .comment-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .comment-form input {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      color: var(--text);
+      outline: none;
+    }
+
+    .comment-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .comment-item {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .comment-author {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .comment-time {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .empty-state {
+      padding: 30px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .mini-badge {
+      font-size: 0.82rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 10px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 100;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      width: min(760px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .close-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: var(--surface-2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-grid input,
+    .form-grid select,
+    .form-grid textarea {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--text);
+      outline: none;
+    }
+
+    .form-grid textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+
+    .helper-text {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar, .rightbar {
+        position: static;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .topbar {
+        flex-wrap: wrap;
+      }
+
+      .post {
+        grid-template-columns: 1fr;
+      }
+
+      .vote-box {
+        flex-direction: row;
+        justify-content: center;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .comment-form {
+        flex-direction: column;
+      }
+
+      .topbar-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">RedditClone</div>
+
+    <div class="search-wrap">
+      <span>🔎</span>
+      <input id="searchInput" type="text" placeholder="Szukaj postów, subredditów i autorów..." />
+    </div>
+
+    <div class="topbar-actions">
+      <button class="btn btn-secondary" id="themeToggle">🌙 Tryb ciemny</button>
+      <button class="btn btn-primary" id="openModalBtn">+ Dodaj post</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="card sidebar">
+      <h3>Subreddity</h3>
+      <ul id="subredditList"></ul>
+
+      <div class="badge-row">
+        <div class="mini-badge">🔥 Trending</div>
+        <div class="mini-badge">💬 Komentarze</div>
+        <div class="mini-badge">⭐ Zapisane</div>
+      </div>
+    </aside>
+
+    <section>
+      <div class="card feed-top">
+        <div class="stats" id="resultsInfo">Ładowanie postów...</div>
+
+        <div class="feed-controls">
+          <select id="sortSelect">
+            <option value="latest">Najnowsze</option>
+            <option value="top">Najwyżej oceniane</option>
+            <option value="comments">Najwięcej komentarzy</option>
+            <option value="saved">Tylko zapisane</option>
+          </select>
+
+          <button class="btn btn-secondary" id="resetFiltersBtn">Reset filtrów</button>
+        </div>
+      </div>
+
+      <div class="feed" id="postFeed"></div>
+    </section>
+
+    <aside class="card rightbar">
+      <h3>O projekcie</h3>
+      <p style="line-height:1.7; color: var(--muted); margin-bottom: 14px;">
+        To jest prosty Reddit clone w jednym pliku. Ma dodawanie postów, komentarze, głosowanie,
+        wyszukiwarkę, filtrowanie, sortowanie, zapisane posty i localStorage.
+      </p>
+
+      <h3>Najlepsze community</h3>
+      <ul>
+        <li><button class="community-item" data-community="all">🌍 Wszystkie</button></li>
+        <li><button class="community-item" data-community="programming">💻 r/programming</button></li>
+        <li><button class="community-item" data-community="design">🎨 r/design</button></li>
+        <li><button class="community-item" data-community="gaming">🎮 r/gaming</button></li>
+        <li><button class="community-item" data-community="music">🎵 r/music</button></li>
+      </ul>
+
+      <p class="footer-note">
+        Dane są zapisywane w przeglądarce. Po odświeżeniu strona pamięta zmiany.
+      </p>
+    </aside>
+  </main>
+
+  <div class="modal" id="postModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Dodaj nowy post</h2>
+        <button class="close-btn" id="closeModalBtn">✕</button>
+      </div>
+
+      <form id="postForm" class="form-grid">
+        <input id="titleInput" type="text" placeholder="Tytuł posta" required />
+
+        <select id="subredditInput" required>
+          <option value="">Wybierz subreddit</option>
+          <option value="programming">r/programming</option>
+          <option value="design">r/design</option>
+          <option value="gaming">r/gaming</option>
+          <option value="music">r/music</option>
+          <option value="memes">r/memes</option>
+        </select>
+
+        <input id="authorInput" type="text" placeholder="Autor" required />
+        <input id="imageInput" type="url" placeholder="Link do obrazka (opcjonalnie)" />
+        <textarea id="contentInput" placeholder="Treść posta" required></textarea>
+
+        <div>
+          <button class="btn btn-primary" type="submit">Opublikuj</button>
+        </div>
+
+        <p class="helper-text">
+          Możesz dodać zwykły post tekstowy albo post z obrazkiem.
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'redditClonePosts_v2';
+    const THEME_KEY = 'redditCloneTheme_v2';
+
+    const defaultPosts = [
+      {
+        id: crypto.randomUUID(),
+        title: 'Jak zacząć naukę JavaScript bez chaosu?',
+        content: 'Polecam zacząć od podstaw: zmienne, funkcje, tablice, obiekty, DOM i localStorage. Najważniejsze to robić małe projekty zamiast samej teorii.',
+        subreddit: 'programming',
+        author: 'CodeStarter',
+        score: 128,
+        comments: [
+          { id: crypto.randomUUID(), author: 'FrontendFan', text: 'Też tak uważam, mini projekty robią robotę.', createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+          { id: crypto.randomUUID(), author: 'JSDev', text: 'DOM + localStorage to super moment na wejście w praktykę.', createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString() }
+        ],
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+        image: '',
+        saved: false
+      },
+      {
+        id: crypto.randomUUID(),
+        title: 'Najładniejsze UI, jakie ostatnio widziałem',
+        content: 'Proste, nowoczesne, dużo przestrzeni i dobre kontrasty. Czasem mniej naprawdę znaczy lepiej.',
+        subreddit: 'design',
+        author: 'PixelMood',
+        score: 97,
+        comments: [
+          { id: crypto.randomUUID(), author: 'UiLover', text: 'Minimalizm zawsze wygrywa, jeśli jest czytelny.', createdAt: new Date(Date.now() - 1000 * 60 * 48).toISOString() }
+        ],
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 7).toISOString(),
+        image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80',
+        saved: true
+      },
+      {
+        id: crypto.randomUUID(),
+        title: 'Jaka gra najlepiej relaksuje po ciężkim dniu?',
+        content: 'Szukam czegoś spokojnego, bez presji i bez rankeda. Macie jakieś propozycje?',
+        subreddit: 'gaming',
+        author: 'NightPlayer',
+        score: 76,
+        comments: [
+          { id: crypto.randomUUID(), author: 'ChillGamer', text: 'Stardew Valley albo Minecraft creative.', createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString() },
+          { id: crypto.randomUUID(), author: 'SimFan', text: 'Dorzuć jeszcze Dave the Diver.', createdAt: new Date(Date.now() - 1000 * 60 * 22).toISOString() }
+        ],
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
+        image: '',
+        saved: false
+      },
+      {
+        id: crypto.randomUUID(),
+        title: 'Piosenka, którą macie ostatnio w głowie?',
+        content: 'Ja ostatnio słucham ciągle tej samej playlisty i serio nie mogę przestać.',
+        subreddit: 'music',
+        author: 'LoopListener',
+        score: 52,
+        comments: [],
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+        image: '',
+        saved: false
+      }
+    ];
+
+    let posts = loadPosts();
+    let selectedSubreddit = 'all';
+    let searchTerm = '';
+    let sortMode = 'latest';
+
+    const postFeed = document.getElementById('postFeed');
+    const subredditList = document.getElementById('subredditList');
+    const resultsInfo = document.getElementById('resultsInfo');
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+    const themeToggle = document.getElementById('themeToggle');
+    const postModal = document.getElementById('postModal');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const postForm = document.getElementById('postForm');
+    const titleInput = document.getElementById('titleInput');
+    const subredditInput = document.getElementById('subredditInput');
+    const authorInput = document.getElementById('authorInput');
+    const imageInput = document.getElementById('imageInput');
+    const contentInput = document.getElementById('contentInput');
+
+    function loadPosts() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return defaultPosts;
+
+      try {
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) && parsed.length ? parsed : defaultPosts;
+      } catch (error) {
+        console.error('Błąd odczytu localStorage:', error);
+        return defaultPosts;
+      }
+    }
+
+    function savePosts() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    }
+
+    function loadTheme() {
+      const theme = localStorage.getItem(THEME_KEY);
+      if (theme === 'dark') {
+        document.body.classList.add('dark');
+        themeToggle.textContent = '☀️ Tryb jasny';
+      } else {
+        themeToggle.textContent = '🌙 Tryb ciemny';
+      }
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+      themeToggle.textContent = isDark ? '☀️ Tryb jasny' : '🌙 Tryb ciemny';
+    }
+
+    function formatRelativeTime(dateString) {
+      const diffMs = Date.now() - new Date(dateString).getTime();
+      const minutes = Math.floor(diffMs / 60000);
+      const hours = Math.floor(diffMs / 3600000);
+      const days = Math.floor(diffMs / 86400000);
+
+      if (minutes < 1) return 'przed chwilą';
+      if (minutes < 60) return `${minutes} min temu`;
+      if (hours < 24) return `${hours} godz. temu`;
+      return `${days} dni temu`;
+    }
+
+    function getAllSubreddits() {
+      const base = ['all'];
+      const dynamic = [...new Set(posts.map(post => post.subreddit))].sort();
+      return [...base, ...dynamic];
+    }
+
+    function renderSubreddits() {
+      subredditList.innerHTML = '';
+      const subreddits = getAllSubreddits();
+
+      subreddits.forEach(sub => {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.textContent = sub === 'all' ? '🌍 Wszystkie' : `r/${sub}`;
+        button.className = selectedSubreddit === sub ? 'active' : '';
+        button.addEventListener('click', () => {
+          selectedSubreddit = sub;
+          renderSubreddits();
+          renderPosts();
+        });
+        li.appendChild(button);
+        subredditList.appendChild(li);
+      });
+    }
+
+    function getFilteredPosts() {
+      let filtered = [...posts];
+
+      if (selectedSubreddit !== 'all') {
+        filtered = filtered.filter(post => post.subreddit === selectedSubreddit);
+      }
+
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase().trim();
+        filtered = filtered.filter(post =>
+          post.title.toLowerCase().includes(term) ||
+          post.content.toLowerCase().includes(term) ||
+          post.author.toLowerCase().includes(term) ||
+          post.subreddit.toLowerCase().includes(term)
+        );
+      }
+
+      if (sortMode === 'latest') {
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      } else if (sortMode === 'top') {
+        filtered.sort((a, b) => b.score - a.score);
+      } else if (sortMode === 'comments') {
+        filtered.sort((a, b) => b.comments.length - a.comments.length);
+      } else if (sortMode === 'saved') {
+        filtered = filtered.filter(post => post.saved);
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      }
+
+      return filtered;
+    }
+
+    function renderPosts() {
+      const filtered = getFilteredPosts();
+      resultsInfo.textContent = `Wyświetlono ${filtered.length} postów`;
+      postFeed.innerHTML = '';
+
+      if (!filtered.length) {
+        postFeed.innerHTML = `
+          <div class="card empty-state">
+            <h3>Brak wyników</h3>
+            <p>Spróbuj zmienić wyszukiwanie, subreddit albo sortowanie.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(post => {
+        const article = document.createElement('article');
+        article.className = 'card post';
+
+        const commentsHtml = post.comments.map(comment => `
+          <div class="comment-item">
+            <div class="comment-author">${escapeHtml(comment.author)}</div>
+            <div class="comment-time">${formatRelativeTime(comment.createdAt)}</div>
+            <div>${escapeHtml(comment.text)}</div>
+          </div>
+        `).join('');
+
+        article.innerHTML = `
+          <div class="vote-box">
+            <button class="vote-btn" data-action="upvote" data-id="${post.id}">⬆️</button>
+            <div class="score">${post.score}</div>
+            <button class="vote-btn" data-action="downvote" data-id="${post.id}">⬇️</button>
+          </div>
+
+          <div class="post-content">
+            <div class="post-meta">
+              <span><strong>r/${escapeHtml(post.subreddit)}</strong></span>
+              <span>•</span>
+              <span>dodane przez u/${escapeHtml(post.author)}</span>
+              <span>•</span>
+              <span>${formatRelativeTime(post.createdAt)}</span>
+            </div>
+
+            <div class="tag">r/${escapeHtml(post.subreddit)}</div>
+            <h2 class="post-title">${escapeHtml(post.title)}</h2>
+            <p class="post-text">${escapeHtml(post.content)}</p>
+
+            ${post.image ? `<img class="post-image" src="${escapeAttribute(post.image)}" alt="Post image" style="display:block;" />` : ''}
+
+            <div class="post-actions">
+              <button class="action-btn" data-action="toggle-comments" data-id="${post.id}">💬 Komentarze (${post.comments.length})</button>
+              <button class="action-btn ${post.saved ? 'active-save' : ''}" data-action="toggle-save" data-id="${post.id}">
+                ${post.saved ? '⭐ Zapisano' : '☆ Zapisz'}
+              </button>
+              <button class="action-btn" data-action="delete-post" data-id="${post.id}">🗑 Usuń</button>
+            </div>
+
+            <div class="comments" id="comments-${post.id}">
+              <form class="comment-form" data-id="${post.id}">
+                <input type="text" name="commentText" placeholder="Dodaj komentarz..." required />
+                <button class="btn btn-primary" type="submit">Dodaj</button>
+              </form>
+
+              <div class="comment-list">
+                ${commentsHtml || '<div class="helper-text">Brak komentarzy. Dodaj pierwszy.</div>'}
+              </div>
+            </div>
+          </div>
+        `;
+
+        postFeed.appendChild(article);
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function escapeAttribute(text) {
+      return String(text).replace(/"/g, '&quot;');
+    }
+
+    function updatePost(postId, updater) {
+      posts = posts.map(post => post.id === postId ? updater(post) : post);
+      savePosts();
+      renderSubreddits();
+      renderPosts();
+    }
+
+    function deletePost(postId) {
+      posts = posts.filter(post => post.id !== postId);
+      savePosts();
+      if (selectedSubreddit !== 'all' && !posts.some(post => post.subreddit === selectedSubreddit)) {
+        selectedSubreddit = 'all';
+      }
+      renderSubreddits();
+      renderPosts();
+    }
+
+    function openModal() {
+      postModal.classList.add('open');
+    }
+
+    function closeModal() {
+      postModal.classList.remove('open');
+      postForm.reset();
+    }
+
+    function addPost(event) {
+      event.preventDefault();
+
+      const newPost = {
+        id: crypto.randomUUID(),
+        title: titleInput.value.trim(),
+        content: contentInput.value.trim(),
+        subreddit: subredditInput.value,
+        author: authorInput.value.trim(),
+        score: 1,
+        comments: [],
+        createdAt: new Date().toISOString(),
+        image: imageInput.value.trim(),
+        saved: false
+      };
+
+      if (!newPost.title || !newPost.content || !newPost.author || !newPost.subreddit) return;
+
+      posts.unshift(newPost);
+      savePosts();
+      renderSubreddits();
+      renderPosts();
+      closeModal();
+    }
+
+    function addComment(postId, commentText) {
+      const cleaned = commentText.trim();
+      if (!cleaned) return;
+
+      updatePost(postId, post => ({
+        ...post,
+        comments: [
+          {
+            id: crypto.randomUUID(),
+            author: 'GuestUser',
+            text: cleaned,
+            createdAt: new Date().toISOString()
+          },
+          ...post.comments
+        ]
+      }));
+
+      const commentsBox = document.getElementById(`comments-${postId}`);
+      if (commentsBox) commentsBox.classList.add('open');
+    }
+
+    function handleFeedClick(event) {
+      const button = event.target.closest('[data-action]');
+      if (!button) return;
+
+      const { action, id } = button.dataset;
+
+      if (action === 'upvote') {
+        updatePost(id, post => ({ ...post, score: post.score + 1 }));
+      }
+
+      if (action === 'downvote') {
+        updatePost(id, post => ({ ...post, score: post.score - 1 }));
+      }
+
+      if (action === 'toggle-save') {
+        updatePost(id, post => ({ ...post, saved: !post.saved }));
+      }
+
+      if (action === 'delete-post') {
+        if (confirm('Na pewno usunąć ten post?')) {
+          deletePost(id);
+        }
+      }
+
+      if (action === 'toggle-comments') {
+        const commentsBox = document.getElementById(`comments-${id}`);
+        if (commentsBox) {
+          commentsBox.classList.toggle('open');
+        }
+      }
+    }
+
+    function handleFeedSubmit(event) {
+      const form = event.target.closest('.comment-form');
+      if (!form) return;
+
+      event.preventDefault();
+      const postId = form.dataset.id;
+      const input = form.querySelector('input[name="commentText"]');
+      addComment(postId, input.value);
+      input.value = '';
+    }
+
+    function resetFilters() {
+      selectedSubreddit = 'all';
+      searchTerm = '';
+      sortMode = 'latest';
+      searchInput.value = '';
+      sortSelect.value = 'latest';
+      renderSubreddits();
+      renderPosts();
+    }
+
+    function bindCommunityButtons() {
+      document.querySelectorAll('.community-item').forEach(button => {
+        button.addEventListener('click', () => {
+          selectedSubreddit = button.dataset.community;
+          renderSubreddits();
+          renderPosts();
+        });
+      });
+    }
+
+    searchInput.addEventListener('input', event => {
+      searchTerm = event.target.value;
+      renderPosts();
+    });
+
+    sortSelect.addEventListener('change', event => {
+      sortMode = event.target.value;
+      renderPosts();
+    });
+
+    resetFiltersBtn.addEventListener('click', resetFilters);
+    themeToggle.addEventListener('click', toggleTheme);
+    openModalBtn.addEventListener('click', openModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    postModal.addEventListener('click', event => {
+      if (event.target === postModal) closeModal();
+    });
+    postForm.addEventListener('submit', addPost);
+    postFeed.addEventListener('click', handleFeedClick);
+    postFeed.addEventListener('submit', handleFeedSubmit);
+
+    loadTheme();
+    renderSubreddits();
+    renderPosts();
+    bindCommunityButtons();
+  </script>
+</body>
+</html>
