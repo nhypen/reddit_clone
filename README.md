@@ -20,6 +20,10 @@ Projekt został wykonany jako ćwiczenie praktyczne z tworzenia aplikacji webowy
 
 ---
 
+## link do strony:
+
+https://nhypen.github.io/reddit_clone/
+
 ## 🛠 Technologie
 
 * HTML5
